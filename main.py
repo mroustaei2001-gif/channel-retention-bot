@@ -129,12 +129,49 @@ async def handle_saved_commands(event):
     if text in [".help", "/help"]:
         help_msg = (
             "⚙️ **راهنمای مدیریت ربات بازگشت ممبر:**\n\n"
-            "▫️ `.addmsg متن شما` : اضافه کردن پیام جدید به چرخه\n"
+            "▫️ `.addmsg متن شما` : اضافه کردن پیام جدید\n"
             "▫️ `.listmsg` : نمایش لیست پیام‌های فعال\n"
-            "▫️ `.clearmsg` : ریست پیام‌ها به حالت پیش‌فرض\n"
+            "▫️ `.resetall` : حذف تمام متن‌ها و خالی کردن لیست\n"
+            "▫️ `.clearmsg` : بازگشت به متن‌های پیش‌فرض اولیه\n"
             "▫️ `.status` : وضعیت صف و سقف روزانه"
         )
         await event.edit(help_msg)
+
+    elif text == ".resetall":
+        messages_list = []
+        save_messages(messages_list)
+        await event.edit("🗑 **تمام متن‌های قبلی پاک شدند!** حالا متن‌های جدید رو با `.addmsg` اضافه کن.")
+
+    elif text.startswith(".addmsg "):
+        new_msg = text[8:].strip()
+        if new_msg:
+            messages_list.append(new_msg)
+            save_messages(messages_list)
+            await event.edit(f"✅ پیام جدید اضافه شد!\nتعداد کل پیام‌ها: {len(messages_list)}")
+
+    elif text == ".listmsg":
+        if not messages_list:
+            await event.edit("⚠️ لیست پیام‌ها خالی است! لطفاً با `.addmsg` پیام اضافه کنید.")
+            return
+        out = "📋 **لیست پیام‌های فعال:**\n\n"
+        for i, m in enumerate(messages_list, 1):
+            out += f"**{i}.**\n{m}\n{'-'*20}\n"
+        await event.edit(out)
+
+    elif text == ".clearmsg":
+        messages_list = DEFAULT_MESSAGES.copy()
+        save_messages(messages_list)
+        await event.edit("🔄 متن‌ها به حالت پیش‌فرض اولیه برگشتند.")
+
+    elif text == ".status":
+        status_text = (
+            f"📊 **وضعیت ربات بازگشت ممبر:**\n\n"
+            f"▫️ کاربران در صف: `{send_queue.qsize()}`\n"
+            f"▫️ ارسال‌های موفق امروز: `{sent_count_today} / {DAILY_SEND_LIMIT}`\n"
+            f"▫️ تعداد متون فعال: `{len(messages_list)}`"
+        )
+        await event.edit(status_text)
+
 
     elif text.startswith(".addmsg "):
         new_msg = text[8:].strip()
